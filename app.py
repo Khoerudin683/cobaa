@@ -185,8 +185,8 @@ elif page == "Evaluasi Model":
 
 
 
-X = data[features]  # Ini sudah DataFrame dengan kolom sesuai 'features'
-X_scaled = scaler.transform(X)  # Scaling data
+X = data[features]
+X_scaled = scaler.transform(X)
 
 y = data["Stress_Level_Encoded"]
 class_labels = ["Low", "Moderate", "High"]
@@ -196,10 +196,12 @@ y_proba = model.predict_proba(X_scaled)
 acc = accuracy_score(y, y_pred)
 
 st.subheader("🎯 Akurasi")
-st.success(f"{acc * 100:.2f}%")  # Tidak perlu kata "Akurasi:" dua kali
+st.success(f"{acc * 100:.2f}%")
 
-    st.markdown("""
-    **Akurasi** adalah persentase prediksi yang benar dari keseluruhan data.
+st.markdown("""
+Model ini menggunakan beberapa fitur seperti jam belajar, jam tidur, dan aktivitas sosial media untuk memprediksi tingkat stres siswa. Akurasi yang diperoleh menunjukkan seberapa baik model ini mengenali pola dari data.
+""")
+
     
     > **Rumus**: (Jumlah Prediksi Benar) / (Total Data)
     
