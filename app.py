@@ -201,9 +201,7 @@ st.success(f"{acc * 100:.2f}%")
 st.markdown("""
 Model ini menggunakan beberapa fitur seperti jam belajar, jam tidur, dan aktivitas sosial media untuk memprediksi tingkat stres siswa. Akurasi yang diperoleh menunjukkan seberapa baik model ini mengenali pola dari data.
 """)
-
-    
-    > **Rumus**: (Jumlah Prediksi Benar) / (Total Data)
+> **Rumus**: (Jumlah Prediksi Benar) / (Total Data)
     
     - Jika akurasi = 100%, artinya semua prediksi tepat.
     - ⚠️ Akurasi tinggi **tidak selalu berarti model bagus**, apalagi jika distribusi kelas tidak seimbang (misalnya mayoritas data ada di kelas "High").
