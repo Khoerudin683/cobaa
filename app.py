@@ -331,7 +331,7 @@ elif page == "Evaluasi Model":
 elif page == "Prediksi":
     st.title("🔮 Prediksi Tingkat Stres Mahasiswa")
 
-    # 👤 Input identitas di sini (bukan halaman terpisah)
+    # 👤 Input identitas
     nama = st.text_input("Nama Anda:")
     umur = st.number_input("Umur Anda:", min_value=5, max_value=100, value=20)
 
@@ -343,9 +343,16 @@ elif page == "Prediksi":
     extracurricular = st.selectbox("Ikut Ekstrakurikuler?", ["Ya", "Tidak"])
     gpa = st.number_input("GPA", 0.0, 4.0, 3.2)
 
-    academic_perf = 'Excellent' if gpa >= 3.5 else 'Good' if gpa >= 3.0 else 'Fair' if gpa >= 2.0 else 'Poor'
-    performance_encoded = {'Poor': 0, 'Fair': 1, 'Good': 2, 'Excellent': 3}[academic_perf]
+    # Hitung performa akademik
+    academic_perf = (
+        "Excellent" if gpa >= 3.5 else
+        "Good" if gpa >= 3.0 else
+        "Fair" if gpa >= 2.0 else
+        "Poor"
+    )
+    performance_encoded = {"Poor": 0, "Fair": 1, "Good": 2, "Excellent": 3}[academic_perf]
 
+    # Siapkan dataframe input
     input_df = pd.DataFrame([{
         "Study_Hours_Per_Day": study,
         "Sleep_Hours_Per_Day": sleep,
@@ -354,27 +361,32 @@ elif page == "Prediksi":
         "Extracurricular_Hours_Per_Day": 1 if extracurricular == "Ya" else 0,
         "GPA": gpa,
         "Academic_Performance_Encoded": performance_encoded
-    }])[features]
+    }])
 
-    input_df = pd.DataFrame(input_df, columns=scaler.feature_names_in_)
-    input_scaled = scaler.transform(input_df)
+    # Gunakan urutan kolom dari features (pastikan features sudah didefinisikan sebelumnya)
+    try:
+        input_df = input_df[features]
+    except NameError:
+        st.error("❌ Variabel `features` belum didefinisikan.")
+    else:
+        input_scaled = scaler.transform(input_df)
 
-    if st.button("Prediksi"):
-        if nama.strip() == "":
-            st.error("❌ Mohon isi nama terlebih dahulu sebelum melakukan prediksi.")
-        else:
-            pred = model.predict(input_scaled)[0]
-            prob = model.predict_proba(input_scaled)[0]
-            label = {0: "Low", 1: "Moderate", 2: "High"}[pred]
-    
-            st.success(f"Hai {nama} (umur {umur}), tingkat stresmu diprediksi: **{label}**")
-    
-            st.subheader("📊 Probabilitas Prediksi")
-            fig, ax = plt.subplots()
-            ax.bar(["Low", "Moderate", "High"], prob, color=["green", "orange", "red"])
-            ax.set_ylabel("Probabilitas")
-            ax.set_ylim(0, 1)
-            st.pyplot(fig)
+        if st.button("Prediksi"):
+            if nama.strip() == "":
+                st.error("❌ Mohon isi nama terlebih dahulu sebelum melakukan prediksi.")
+            else:
+                pred = model.predict(input_scaled)[0]
+                prob = model.predict_proba(input_scaled)[0]
+                label = {0: "Low", 1: "Moderate", 2: "High"}[pred]
+
+                st.success(f"Hai {nama} (umur {umur}), tingkat stresmu diprediksi: **{label}**")
+
+                st.subheader("📊 Probabilitas Prediksi")
+                fig, ax = plt.subplots()
+                ax.bar(["Low", "Moderate", "High"], prob, color=["green", "orange", "red"])
+                ax.set_ylabel("Probabilitas")
+                ax.set_ylim(0, 1)
+                st.pyplot(fig)
 
 # ===========================
 # 7. Anggota Kelompok
