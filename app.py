@@ -163,57 +163,53 @@ elif page == "Evaluasi Model":
     st.title("📈 Evaluasi Model")
     st.markdown("""
     ### 🧪 Evaluasi Model yang Digunakan
-    
+
     Model yang digunakan adalah **Stacking Classifier**, yaitu gabungan dari beberapa model dasar (XGBoost, Logistic Regression, Decision Tree, Random Forest, dan SVM) yang dipadukan menggunakan meta-model Random Forest.
     Untuk menilai performa model, berikut metrik evaluasi yang digunakan:
-    
+
     - **🎯 Akurasi**: Proporsi data uji yang berhasil diprediksi dengan benar. Metrik ini memberikan gambaran umum seberapa sering model membuat prediksi yang benar.
-    
     - **📊 Confusion Matrix**: Menunjukkan perbandingan antara label sebenarnya dan hasil prediksi. Memudahkan untuk melihat kesalahan spesifik antar kelas stres (Low, Moderate, High).
-    
     - **📉 ROC Curve dan AUC (Area Under Curve)**:
       - ROC (Receiver Operating Characteristic) menunjukkan trade-off antara True Positive Rate dan False Positive Rate.
       - AUC mengukur kemampuan model membedakan antara kelas: semakin tinggi (mendekati 1), semakin baik performa model.
-    
     - **🧾 Classification Report**:
       - **Precision**: Seberapa akurat model saat memprediksi suatu kelas.
       - **Recall**: Seberapa baik model mendeteksi semua instance dari suatu kelas.
-      - **F1-Score**: Harmonic mean dari precision dan recall, menggambarkan keseimbangan antara keduanya.
-    
+      - **F1-Score**: Harmonic mean dari precision dan recall.
+
     Evaluasi dilakukan menggunakan **data asli** yang telah diseimbangkan menggunakan **SMOTE** dan dinormalisasi dengan **RobustScaler**, agar hasil prediksi lebih adil dan tidak bias terhadap kelas dominan.
     """)
 
+    # Persiapan data dan prediksi
+    X = data[features]
+    X_scaled = scaler.transform(X)
+    y = data["Stress_Level_Encoded"]
+    class_labels = ["Low", "Moderate", "High"]
 
+    y_pred = model.predict(X_scaled)
+    y_proba = model.predict_proba(X_scaled)
+    acc = accuracy_score(y, y_pred)
 
-X = data[features]
-X_scaled = scaler.transform(X)
+    # Akurasi
+    st.subheader("🎯 Akurasi")
+    st.success(f"{acc * 100:.2f}%")
+    st.markdown("""
+    Model ini menggunakan beberapa fitur seperti jam belajar, jam tidur, dan aktivitas sosial media untuk memprediksi tingkat stres siswa. Akurasi yang diperoleh menunjukkan seberapa baik model ini mengenali pola dari data.
 
-y = data["Stress_Level_Encoded"]
-class_labels = ["Low", "Moderate", "High"]
+    **Rumus**: (Jumlah Prediksi Benar) / (Total Data)
 
-y_pred = model.predict(X_scaled)
-y_proba = model.predict_proba(X_scaled)
-acc = accuracy_score(y, y_pred)
-
-st.subheader("🎯 Akurasi")
-st.success(f"{acc * 100:.2f}%")
-
-st.markdown("""
-Model ini menggunakan beberapa fitur seperti jam belajar, jam tidur, dan aktivitas sosial media untuk memprediksi tingkat stres siswa. Akurasi yang diperoleh menunjukkan seberapa baik model ini mengenali pola dari data.
-""")
-> **Rumus**: (Jumlah Prediksi Benar) / (Total Data)
-    
     - Jika akurasi = 100%, artinya semua prediksi tepat.
     - ⚠️ Akurasi tinggi **tidak selalu berarti model bagus**, apalagi jika distribusi kelas tidak seimbang (misalnya mayoritas data ada di kelas "High").
     """)
 
+    # Confusion Matrix
     st.subheader("📊 Confusion Matrix")
     fig_cm, ax = plt.subplots()
     ConfusionMatrixDisplay.from_predictions(y, y_pred, display_labels=class_labels, ax=ax)
     st.pyplot(fig_cm)
     st.markdown("""
     **Confusion Matrix** adalah tabel yang membandingkan antara label sebenarnya dan hasil prediksi model.
-    
+
     - **Baris** = label asli (ground truth)
     - **Kolom** = label hasil prediksi
     - Angka di **diagonal utama** adalah jumlah prediksi yang benar.
@@ -228,6 +224,7 @@ Model ini menggunakan beberapa fitur seperti jam belajar, jam tidur, dan aktivit
     ✅ Ini menunjukkan model **sangat akurat** dalam memetakan data ke kelas stres yang benar.
     """)
 
+    # ROC Curve
     st.subheader("📉 ROC Curve")
     y_bin = label_binarize(y, classes=[0, 1, 2])
     fig_roc, ax = plt.subplots()
@@ -242,7 +239,7 @@ Model ini menggunakan beberapa fitur seperti jam belajar, jam tidur, dan aktivit
     st.pyplot(fig_roc)
     st.markdown("""
     **ROC Curve** (Receiver Operating Characteristic) menunjukkan hubungan antara:
-    
+
     - **True Positive Rate (Recall)** = Seberapa banyak kasus positif yang terdeteksi dengan benar.
     - **False Positive Rate** = Seberapa banyak kasus negatif yang salah dikira positif.
 
@@ -257,7 +254,7 @@ Model ini menggunakan beberapa fitur seperti jam belajar, jam tidur, dan aktivit
     - Artinya model sangat hebat dalam membedakan ketiga tingkat stres.
     """)
 
-
+    # Classification Report
     st.subheader("🧾 Classification Report")
     st.dataframe(pd.DataFrame(classification_report(y, y_pred, target_names=class_labels, output_dict=True)).T)
     st.markdown("""
@@ -276,30 +273,31 @@ Model ini menggunakan beberapa fitur seperti jam belajar, jam tidur, dan aktivit
       - `High`: 1029 mahasiswa
     """)
 
+    # Ringkasan Pelatihan
     st.subheader("🧠 Ringkasan Hasil Pelatihan Model")
     st.markdown("""
     Model dilatih menggunakan pendekatan **Stacking Classifier**, yaitu menggabungkan beberapa algoritma dasar yang kuat dengan meta-learner.  
     Berikut adalah detail proses pelatihan model:
-    
+
     ---
-    
+
     #### 🔢 Dataset:
     - Jumlah data: **2.000 mahasiswa**
     - Jumlah fitur: **8 kolom** (gabungan numerik dan kategorik)
     - Fitur numerik termasuk: **Study, Sleep, GPA, dsb**
     - Target: `Stress_Level` (Low, Moderate, High)
-    
+
     ---
-    
+
     #### 📊 Praproses:
     - Konversi label target menjadi numerik:  
       `Low = 0`, `Moderate = 1`, `High = 2`
     - Normalisasi fitur numerik dengan **RobustScaler**
     - Penyeimbangan kelas target menggunakan **SMOTE (Synthetic Minority Over-sampling Technique)**  
       > Teknik ini efektif mengatasi dominasi label tertentu (misal `High`) agar model tidak bias.
-    
+
     ---
-    
+
     #### ⚙️ Arsitektur Model:
     - **Base Learners**:
         - Logistic Regression
@@ -310,9 +308,9 @@ Model ini menggunakan beberapa fitur seperti jam belajar, jam tidur, dan aktivit
     - **Meta-Learner**:
         - Random Forest Classifier  
           > Digunakan untuk menggabungkan hasil prediksi dari base learners.
-    
+
     ---
-    
+
     #### 📈 Evaluasi Training:
     - **Akurasi Pelatihan**: 100%
     - **Confusion Matrix**: Semua prediksi benar
@@ -321,9 +319,10 @@ Model ini menggunakan beberapa fitur seperti jam belajar, jam tidur, dan aktivit
         - Precision: 1.00
         - Recall: 1.00
         - F1-score: 1.00
-    
+
     > 💡 Performa sempurna di data pelatihan menunjukkan bahwa model **fit sangat baik**, namun perlu diuji lebih lanjut menggunakan data uji atau validasi silang untuk mengecek kemungkinan **overfitting**.
     """)
+
 
 
 # ===========================
