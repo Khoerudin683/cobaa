@@ -184,19 +184,20 @@ elif page == "Evaluasi Model":
     """)
 
 
-    X = data[features]
-    X = pd.DataFrame(X, columns=features)
-    X_scaled = scaler.transform(X)
 
-    y = data["Stress_Level_Encoded"]
-    class_labels = ["Low", "Moderate", "High"]
-    
-    y_pred = model.predict(X_scaled)
-    y_proba = model.predict_proba(X_scaled)
-    acc = accuracy_score(y, y_pred)
+X = data[features]  # Ini sudah DataFrame dengan kolom sesuai 'features'
+X_scaled = scaler.transform(X)  # Scaling data
 
-    st.subheader("🎯 Akurasi")
-    st.success(f"Akurasi: {acc * 100:.2f}%")
+y = data["Stress_Level_Encoded"]
+class_labels = ["Low", "Moderate", "High"]
+
+y_pred = model.predict(X_scaled)
+y_proba = model.predict_proba(X_scaled)
+acc = accuracy_score(y, y_pred)
+
+st.subheader("🎯 Akurasi")
+st.success(f"{acc * 100:.2f}%")  # Tidak perlu kata "Akurasi:" dua kali
+
     st.markdown("""
     **Akurasi** adalah persentase prediksi yang benar dari keseluruhan data.
     
