@@ -161,43 +161,71 @@ if page == "Deskripsi Data":
 # ===========================
 elif page == "Evaluasi Model":
     st.title("📈 Evaluasi Model")
-
     st.markdown("""
     ### 🧪 Evaluasi Model yang Digunakan
+
     Model yang digunakan adalah **Stacking Classifier**, yaitu gabungan dari beberapa model dasar (XGBoost, Logistic Regression, Decision Tree, Random Forest, dan SVM) yang dipadukan menggunakan meta-model Random Forest.
+    Untuk menilai performa model, berikut metrik evaluasi yang digunakan:
 
-    Untuk penilaian kinerja model, berikut evaluasi yang digunakan:
-    - **🎯 Akurasi**
-    - **📊 Confusion Matrix**
-    - **📉 ROC Curve dan AUC**
-    - **🧾 Laporan Klasifikasi**
+    - **🎯 Akurasi**: Proporsi data uji yang berhasil diprediksi dengan benar. Metrik ini memberikan gambaran umum seberapa sering model membuat prediksi yang benar.
+    - **📊 Confusion Matrix**: Menunjukkan perbandingan antara label sebenarnya dan hasil prediksi. Memudahkan untuk melihat kesalahan spesifik antar kelas stres (Low, Moderate, High).
+    - **📉 ROC Curve dan AUC (Area Under Curve)**:
+      - ROC (Receiver Operating Characteristic) menunjukkan trade-off antara True Positive Rate dan False Positive Rate.
+      - AUC mengukur kemampuan model membedakan antara kelas: semakin tinggi (mendekati 1), semakin baik performa model.
+    - **🧾 Classification Report**:
+      - **Precision**: Seberapa akurat model saat memprediksi suatu kelas.
+      - **Recall**: Seberapa baik model mendeteksi semua instance dari suatu kelas.
+      - **F1-Score**: Harmonic mean dari precision dan recall.
 
-    Evaluasi dilakukan menggunakan **data asli** yang telah diseimbangkan menggunakan **SMOTE** dan dinormalisasi dengan **RobustScaler**.
+    Evaluasi dilakukan menggunakan **data asli** yang telah diseimbangkan menggunakan **SMOTE** dan dinormalisasi dengan **RobustScaler**, agar hasil prediksi lebih adil dan tidak bias terhadap kelas dominan.
     """)
 
-    # --- Persiapan data dan prediksi
-    X = data[fitur]
+    # Persiapan data dan prediksi
+    X = data[features]
     X_scaled = scaler.transform(X)
     y = data["Stress_Level_Encoded"]
     class_labels = ["Low", "Moderate", "High"]
 
     y_pred = model.predict(X_scaled)
     y_proba = model.predict_proba(X_scaled)
-
     acc = accuracy_score(y, y_pred)
 
-    # --- Akurasi
+    # Akurasi
     st.subheader("🎯 Akurasi")
     st.success(f"{acc * 100:.2f}%")
+    st.markdown("""
+    Model ini menggunakan beberapa fitur seperti jam belajar, jam tidur, dan aktivitas sosial media untuk memprediksi tingkat stres siswa. Akurasi yang diperoleh menunjukkan seberapa baik model ini mengenali pola dari data.
 
-    # --- Confusion Matrix
+    **Rumus**: (Jumlah Prediksi Benar) / (Total Data)
+
+    - Jika akurasi = 100%, artinya semua prediksi tepat.
+    - ⚠️ Akurasi tinggi **tidak selalu berarti model bagus**, apalagi jika distribusi kelas tidak seimbang (misalnya mayoritas data ada di kelas "High").
+    """)
+
+    # Confusion Matrix
     st.subheader("📊 Confusion Matrix")
     fig_cm, ax = plt.subplots()
     ConfusionMatrixDisplay.from_predictions(y, y_pred, display_labels=class_labels, ax=ax)
     st.pyplot(fig_cm)
+    st.markdown("""
+    **Confusion Matrix** adalah tabel yang membandingkan antara label sebenarnya dan hasil prediksi model.
 
-    # --- ROC Curve
-    st.subheader("Kurva ROC 📉")
+    - **Baris** = label asli (ground truth)
+    - **Kolom** = label hasil prediksi
+    - Angka di **diagonal utama** adalah jumlah prediksi yang benar.
+    - Angka di luar diagonal = prediksi yang salah.
+
+    📝 **Contoh pada hasil:**
+    - `Low → Low` = 297 ✅
+    - `Moderate → Moderate` = 674 ✅
+    - `High → High` = 1029 ✅
+    - Tidak ada angka di luar diagonal → tidak ada kesalahan prediksi.
+
+    ✅ Ini menunjukkan model **sangat akurat** dalam memetakan data ke kelas stres yang benar.
+    """)
+
+    # ROC Curve
+    st.subheader("📉 ROC Curve")
     y_bin = label_binarize(y, classes=[0, 1, 2])
     fig_roc, ax = plt.subplots()
     for i in range(3):
@@ -209,45 +237,90 @@ elif page == "Evaluasi Model":
     ax.set_ylabel("True Positive Rate")
     ax.legend()
     st.pyplot(fig_roc)
+    st.markdown("""
+    **ROC Curve** (Receiver Operating Characteristic) menunjukkan hubungan antara:
 
-    # --- Classification Report
+    - **True Positive Rate (Recall)** = Seberapa banyak kasus positif yang terdeteksi dengan benar.
+    - **False Positive Rate** = Seberapa banyak kasus negatif yang salah dikira positif.
+
+    Garis ROC yang bagus akan **mendekati pojok kiri atas**.
+
+    **AUC (Area Under Curve)** mengukur luas area di bawah kurva ROC.
+    - Nilai AUC = 1.0 artinya sempurna.
+    - Nilai AUC = 0.5 artinya sama seperti menebak secara acak.
+
+    📝 **Contoh hasil:**
+    - AUC untuk semua kelas (`Low`, `Moderate`, `High`) = **1.00**
+    - Artinya model sangat hebat dalam membedakan ketiga tingkat stres.
+    """)
+
+    # Classification Report
     st.subheader("🧾 Classification Report")
-    st.dataframe(pd.DataFrame(
-        classification_report(y, y_pred, target_names=class_labels, output_dict=True)
-    ).T)
+    st.dataframe(pd.DataFrame(classification_report(y, y_pred, target_names=class_labels, output_dict=True)).T)
+    st.markdown("""
+    **Classification Report** memberikan ringkasan metrik evaluasi untuk setiap kelas:
 
-    # --- Ringkasan Pelatihan Model
+    - **Precision**: Dari semua prediksi ke kelas ini, berapa yang benar.
+    - **Recall**: Dari semua data yang sebenarnya milik kelas ini, berapa yang berhasil ditemukan.
+    - **F1-Score**: Rata-rata harmonis dari precision dan recall.
+    - **Support**: Jumlah data asli di kelas tersebut.
+
+    📝 **Contoh Interpretasi:**
+    - Jika `High` punya precision dan recall = 1.00 → model memprediksi kelas ini **dengan sempurna**.
+    - `Support` menunjukkan distribusi data asli, contohnya:
+      - `Low`: 297 mahasiswa
+      - `Moderate`: 674 mahasiswa
+      - `High`: 1029 mahasiswa
+    """)
+
+    # Ringkasan Pelatihan
     st.subheader("🧠 Ringkasan Hasil Pelatihan Model")
     st.markdown("""
+    Model dilatih menggunakan pendekatan **Stacking Classifier**, yaitu menggabungkan beberapa algoritma dasar yang kuat dengan meta-learner.  
+    Berikut adalah detail proses pelatihan model:
+
+    ---
+
     #### 🔢 Dataset:
-    - Jumlah data: **2.000 pelajar**
-    - Fitur numerik: Belajar, Tidur, IPK, dsb
-    - Target: Stress_Level (Low, Moderate, High)
+    - Jumlah data: **2.000 mahasiswa**
+    - Jumlah fitur: **8 kolom** (gabungan numerik dan kategorik)
+    - Fitur numerik termasuk: **Study, Sleep, GPA, dsb**
+    - Target: `Stress_Level` (Low, Moderate, High)
+
+    ---
 
     #### 📊 Praproses:
-    - Konversi label target menjadi numerik: Low = 0, Moderate = 1, High = 2
-    - Normalisasi: RobustScaler
-    - Penyeimbangan: SMOTE
+    - Konversi label target menjadi numerik:  
+      `Low = 0`, `Moderate = 1`, `High = 2`
+    - Normalisasi fitur numerik dengan **RobustScaler**
+    - Penyeimbangan kelas target menggunakan **SMOTE (Synthetic Minority Over-sampling Technique)**  
+      > Teknik ini efektif mengatasi dominasi label tertentu (misal `High`) agar model tidak bias.
 
-    #### ⚙️ Model Arsitektur:
+    ---
+
+    #### ⚙️ Arsitektur Model:
     - **Base Learners**:
         - Logistic Regression
-        - Decision Tree
-        - Random Forest
-        - SVM
-        - XGBoost
-    - **Meta-Learner**: Random Forest
+        - Decision Tree Classifier
+        - Random Forest Classifier
+        - Support Vector Machine (SVM)
+        - XGBoost Classifier
+    - **Meta-Learner**:
+        - Random Forest Classifier  
+          > Digunakan untuk menggabungkan hasil prediksi dari base learners.
+
+    ---
 
     #### 📈 Evaluasi Training:
-    - Akurasi: 100%
-    - Confusion Matrix: semua benar
-    - ROC AUC Score: 1.00
-    - Classification Report:
+    - **Akurasi Pelatihan**: 100%
+    - **Confusion Matrix**: Semua prediksi benar
+    - **ROC AUC Score**: 1.00 untuk semua kelas
+    - **Classification Report**:
         - Precision: 1.00
         - Recall: 1.00
         - F1-score: 1.00
 
-    > 💡 Hasil sempurna perlu diuji lebih lanjut untuk deteksi kemungkinan **overfitting**.
+    > 💡 Performa sempurna di data pelatihan menunjukkan bahwa model **fit sangat baik**, namun perlu diuji lebih lanjut menggunakan data uji atau validasi silang untuk mengecek kemungkinan **overfitting**.
     """)
 
 
