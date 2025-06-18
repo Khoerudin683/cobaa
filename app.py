@@ -185,7 +185,7 @@ elif page == "Evaluasi Model":
 
 
     X = data[features]
-    X = pd.DataFrame(X, columns=scaler.feature_names_in_)
+    X = pd.DataFrame(X, columns=features)
     X_scaled = scaler.transform(X)
 
     y = data["Stress_Level_Encoded"]
